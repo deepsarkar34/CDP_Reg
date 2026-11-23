@@ -60,9 +60,8 @@ export const useDemo = create<DemoState & DemoActions>((set, get) => ({
 
 export const currentBeat = (beat: number) => BEATS[beat];
 
-/** Channel reach counts. Consent is a per-channel filter: it only affects email. */
+/** Channel reach counts. Consent is a per-channel filter: it only affects email. Website is a live lookup (no count). */
 export function channelCounts(consent: boolean) {
   const c = scenario.channels;
-  const n = Object.fromEntries(Object.entries(c).map(([k, v]) => [k, v.n])) as Record<keyof typeof c, number>;
-  return { ...n, email: consent ? n.email : n.email - 1 };
+  return { crm: c.crm.n, email: consent ? c.email.n : c.email.n - 1, media: c.media.n, web: 0 };
 }

@@ -217,3 +217,24 @@ button { font: inherit; color: inherit; }
 .step .t { font-size: 14.5px; }
 .grid3 { display: grid; gap: 12px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
 @media (max-width: 900px) { .map { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .grid3 { grid-template-columns: minmax(0, 1fr); } }
+/* Nine steps: Snowflake zone holds Clean and Golden record creation */
+.map { grid-template-columns: 2fr 2.6fr 2fr 1.3fr 2fr; }
+.flow4 { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr); gap: 8px; align-items: stretch; }
+.flow-arrow { align-self: center; color: var(--muted); font-size: 18px; }
+@media (max-width: 900px) { .flow4 { grid-template-columns: minmax(0, 1fr); } .flow-arrow { display: none; } }
+
+/* Micro segment logic tree */
+.tag.d360 { background: color-mix(in srgb, var(--purple) 14%, transparent); color: var(--purple); border-color: transparent; }
+.logic { display: grid; gap: 4px; border: 1px solid var(--line); border-left: 3px solid var(--blue-bright); border-radius: 10px; padding: 8px 10px; }
+.logic.exclude { border-left-color: var(--magenta); background: var(--magenta-soft); }
+.logic-label { font-size: 12px; font-weight: 600; letter-spacing: .04em; color: var(--muted); padding: 2px 2px 4px; }
+.cond { display: grid; grid-template-columns: minmax(0, 1fr) auto 56px; gap: 10px; align-items: center; padding: 5px 6px; border-radius: 6px; font-size: 14px; }
+.cond-count { text-align: right; color: var(--ok); font-size: 13px; }
+.logic.exclude .cond-count { color: var(--magenta); }
+.logic-or { margin-left: 22px; border: 1px dashed var(--line-2); border-radius: 8px; padding: 4px 6px; }
+.mini-timeline { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+.mt-step { display: grid; border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px; font-size: 12.5px; }
+.mt-step b { color: var(--blue-bright); font-weight: 500; }
+/* Step buttons size to their names so "Golden record creation" fits next to "Clean" */
+.zone-steps .step { flex: 1 1 auto; }
+.map { grid-template-columns: 1.8fr 3.1fr 1.9fr 1.3fr 1.9fr; }

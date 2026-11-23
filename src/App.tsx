@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import type { ComponentType } from 'react';
+import { useEffect, useRef, type ComponentType } from 'react';
 import { useDemo, currentBeat } from './store';
 import { BEATS, STEPS } from './beats';
 import { VENDORS } from './vendors';
@@ -9,9 +9,8 @@ import { Logo } from './components/Logo';
 import { Hook } from './stages/Hook';
 import { Capture } from './stages/Capture';
 import { Clean } from './stages/Clean';
-import { Master } from './stages/Master';
-import { AiMl } from './stages/AiMl';
-import { Resolve } from './stages/Resolve';
+import { GoldenRecord } from './stages/GoldenRecord';
+import { Profile } from './stages/Profile';
 import { Audiences } from './stages/Audiences';
 import { Decide } from './stages/Decide';
 import { Activate } from './stages/Activate';
@@ -19,30 +18,29 @@ import { Learn } from './stages/Learn';
 import { PASSES, isActive, decisionLabel, type Mode } from './decision';
 import type { StageProps } from './stages/types';
 
-const STAGES: ComponentType<StageProps>[] = [Hook, Capture, Clean, Master, AiMl, Resolve, Audiences, Decide, Activate, Learn];
-const DECIDE = 7;
+const STAGES: ComponentType<StageProps>[] = [Hook, Capture, Clean, GoldenRecord, Profile, Audiences, Decide, Activate, Learn];
+const DECIDE = 6;
 
 // Short, factual status per step: what the systems know about her right now.
 const status = (step: number, mode: Mode, consent: boolean) => [
   '6 fragments, not linked yet',
   '8 records in 6 systems',
   'Records standardized, patient IDs re-tokenized',
-  `Golden ID ${scenario.hcp.goldenId}`,
-  'Likelihood score 0.81, call note topic: side effect management',
-  'Recognized by email, CRM ID and web device',
-  `In ${scenario.audience.name} (342 oncologists) and the real-time audience since 10:16`,
+  `Golden ID ${scenario.hcp.goldenId}, 6 identifiers in the crosswalk, score 0.81`,
+  'Recognized from the Snowflake crosswalk: email, CRM ID, SFMC and web device.',
+  `In ${scenario.audience.name} (23 oncologists), and in the real-time audience since 10:16.`,
   `Next action: ${decisionLabel(mode, consent).toLowerCase()}`,
-  'Reached by email, her rep, HCP media and the website',
+  `Activated from Data 360: email ${consent ? 21 : 20}, rep alert 23, media blocked, website live lookup`,
   'Her response changes next week',
 ][step];
 
 type ZoneKey = 'sources' | 'engineering' | 'cdp' | 'decision' | 'channels';
 const ZONES: { key: ZoneKey; steps: number[] }[] = [
   { key: 'sources', steps: [0, 1] },
-  { key: 'engineering', steps: [2, 3, 4] },
-  { key: 'cdp', steps: [5, 6] },
-  { key: 'decision', steps: [7] },
-  { key: 'channels', steps: [8, 9] },
+  { key: 'engineering', steps: [2, 3] },
+  { key: 'cdp', steps: [4, 5] },
+  { key: 'decision', steps: [6] },
+  { key: 'channels', steps: [7, 8] },
 ];
 
 export default function App() {
@@ -52,6 +50,9 @@ export default function App() {
   const v = VENDORS[vendor];
   const Stage = STAGES[b.step];
   const stepBeats = STEPS[b.step].notes.length;
+  // Each step starts at the top, whatever the previous step scrolled to.
+  const stageRef = useRef<HTMLElement>(null);
+  useEffect(() => { stageRef.current?.scrollTo({ top: 0 }); }, [b.step]);
 
   return (
     <div className="app">
@@ -106,7 +107,7 @@ export default function App() {
         </nav>
       </div>
 
-      <main className="stage" aria-live="polite">
+      <main ref={stageRef} className="stage" aria-live="polite">
         <AnimatePresence mode="wait">
           <motion.div key={b.step} className="stage-inner"
             initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3, ease: 'easeOut' }}>

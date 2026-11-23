@@ -1,23 +1,23 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import scenario from '../scenario/scenario.json';
-import type { StageProps } from './types';
-import { DeepDive, Head, Win } from '../components/ui';
+import { DeepDive, GradText, Win } from '../components/ui';
 
 const A = scenario.ai;
 const TABS = ['Snowflake ML: predict', 'Cortex: read call notes', 'Cortex: ask in plain English'];
 const TITLES = ['A likelihood score for *every oncologist*', 'A call note becomes *data*', 'Ask across all oncologists in *plain English*'];
 
-export function AiMl({ local, deep }: StageProps) {
-  // Each beat opens one capability; the tabs let the presenter jump around for questions.
-  const [tab, setTab] = useState(local);
-  useEffect(() => setTab(local), [local]);
+/** The AI and ML capabilities, unchanged from the previous AI and ML step; now a sub-view of Golden record creation. */
+export function AiTabs({ index }: { index: number }) {
+  const [tab, setTab] = useState(index);
+  useEffect(() => setTab(index), [index]);
   return (
     <>
-      <Head title={TITLES[tab]} sub="Three ways Snowflake adds intelligence before Data 360 sees her." />
+      <p style={{ fontSize: 16 }}>Built on the golden record, so every score and topic belongs to one confirmed doctor.</p>
       <div className="seg light" role="group" aria-label="Snowflake AI capability" style={{ justifySelf: 'start' }}>
         {TABS.map((t, i) => <button key={t} aria-pressed={tab === i} onClick={() => setTab(i)}>{t}</button>)}
       </div>
+      <span className="muted" style={{ fontSize: 14, marginTop: -8 }}><GradText text={TITLES[tab]} /></span>
       <AnimatePresence mode="wait">
         <motion.div key={tab} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
           {tab === 0 && <Predict />}
@@ -25,21 +25,22 @@ export function AiMl({ local, deep }: StageProps) {
           {tab === 2 && <Ask />}
         </motion.div>
       </AnimatePresence>
-      <div className="legend" style={{ gap: 8 }}>
-        <span className="tag">Gold record</span><span>+</span><span className="tag">ML.HCP_SCORES</span><span>+</span><span className="tag">AI.CALL_NOTE_TOPICS</span><span>→</span>
-        <span className="tag blue">Zero Copy to Data 360, no pipeline, no copy</span>
-      </div>
-      <DeepDive show={deep} title="where each piece runs">
-        <table className="dt">
-          <tbody>
-            <tr><td className="muted" style={{ width: 220 }}>Model</td><td>Snowflake ML: Feature Store, notebooks, Model Registry, weekly batch scoring</td></tr>
-            <tr><td className="muted">Call notes</td><td>Cortex AI <code>AI_EXTRACT</code> over every new Veeva note, nightly</td></tr>
-            <tr><td className="muted">Questions</td><td>Snowflake Intelligence over governed tables, answered with SQL</td></tr>
-            <tr><td className="muted">Into Data 360</td><td>All three read through Zero Copy, no pipeline and no copy</td></tr>
-          </tbody>
-        </table>
-      </DeepDive>
     </>
+  );
+}
+
+export function AiDeepDive({ show }: { show: boolean }) {
+  return (
+    <DeepDive show={show} title="where each piece runs">
+      <table className="dt">
+        <tbody>
+          <tr><td className="muted" style={{ width: 220 }}>Model</td><td>Snowflake ML: Feature Store, notebooks, Model Registry, weekly batch scoring</td></tr>
+          <tr><td className="muted">Call notes</td><td>Cortex AI <code>AI_EXTRACT</code> over every new Veeva note, nightly</td></tr>
+          <tr><td className="muted">Questions</td><td>Snowflake Intelligence over governed tables, answered with SQL</td></tr>
+          <tr><td className="muted">Into Data 360</td><td>All three read through Zero Copy, no pipeline and no copy</td></tr>
+        </tbody>
+      </table>
+    </DeepDive>
   );
 }
 

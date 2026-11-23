@@ -5,7 +5,8 @@ import type { StageProps } from './types';
 import { Head, Reveal, Win } from '../components/ui';
 
 const L = scenario.learn;
-const segN = scenario.audience.build[scenario.audience.build.length - 1][1] as number;
+// The holdout is measured across the whole side effect programme, not one 23-doctor micro segment.
+const segN = L.programmeSize;
 export const holdoutCount = Math.round(segN * L.holdoutShare);
 export const liftPoints = L.engagedContacted - L.engagedHoldout;
 
@@ -59,7 +60,7 @@ export function Learn({ local }: StageProps) {
             <div style={{ display: 'grid' }}><span className="big" style={{ fontSize: 44, color: 'var(--faint)' }}>{L.engagedHoldout}%</span><span className="muted" style={{ fontSize: 13 }}>holdout, engaged</span></div>
             <div style={{ display: 'grid' }}><span className="big g" style={{ fontSize: 44 }}>{liftPoints} pts</span><span className="muted" style={{ fontSize: 13 }}>caused by the program</span></div>
           </div>
-          <span className="muted" style={{ fontSize: 14 }}>Hold back {Math.round(L.holdoutShare * 100)}% of {scenario.audience.name} from every action. After {L.holdoutDays} days, compare engagement and new patient starts from IQVIA.</span>
+          <span className="muted" style={{ fontSize: 14 }}>Hold back {Math.round(L.holdoutShare * 100)}% of {L.programme.toLowerCase()} from every action. After {L.holdoutDays} days, compare engagement and new patient starts from IQVIA.</span>
         </Win>
       </Reveal>
       <div ref={endRef} />

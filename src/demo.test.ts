@@ -7,8 +7,8 @@ import { allowedOptions, blockedReasons, chooseAction, playOrder, OPTIONS } from
 beforeEach(() => useDemo.getState().reset());
 
 describe('beat engine', () => {
-  it('has ten steps in the order of the Dr. Ortiz story', () => {
-    expect(STEPS.map(s => s.id)).toEqual(['hook', 'capture', 'clean', 'master', 'ai', 'resolve', 'audiences', 'decide', 'activate', 'learn']);
+  it('has nine steps in the order of the identity-in-Snowflake story', () => {
+    expect(STEPS.map(s => s.id)).toEqual(['hook', 'capture', 'clean', 'golden', 'profile', 'audiences', 'decide', 'activate', 'learn']);
     expect(BEATS).toHaveLength(STEPS.reduce((a, s) => a + s.notes.length, 0));
   });
 
@@ -20,9 +20,9 @@ describe('beat engine', () => {
   });
 
   it('jumps to the first beat of a step', () => {
-    useDemo.getState().jumpStep(7);
-    expect(BEATS[useDemo.getState().beat]).toMatchObject({ step: 7, local: 0 });
-    expect(firstBeatOf(9)).toBeGreaterThan(0);
+    useDemo.getState().jumpStep(6);
+    expect(BEATS[useDemo.getState().beat]).toMatchObject({ step: 6, local: 0 });
+    expect(firstBeatOf(8)).toBeGreaterThan(0);
   });
 });
 
@@ -34,17 +34,26 @@ describe('scenario numbers (illustrative, from the brief)', () => {
     expect(scenario.sources.reduce((a, s) => a + s.records, 0)).toBe(8);
   });
 
-  it('builds Side effect priority from 4,120 down to 342', () => {
-    expect(scenario.audience.build.map(r => r[1])).toEqual([4120, 1030, 386, 342]);
+  it('micro segment counts fall 4,120 to 23 in build order', () => {
+    const A = scenario.audience;
+    const counts = [...A.include.map(r => r[3]), A.orGroup.count, ...A.exclude.map(r => r[3])];
+    expect(counts).toEqual([4120, 412, 118, 61, 38, 29, 23]);
   });
 
-  it('never reaches more oncologists in a channel than are in the segment', () => {
-    Object.values(channelCounts(true)).forEach(n => expect(n).toBeLessThanOrEqual(342));
-    expect(channelCounts(true).email - channelCounts(false).email).toBe(1);
+  it('identity is decided in Snowflake: four rules and six crosswalk identifiers for HCP-00731', () => {
+    expect(scenario.identity.rules.map(r => r.id)).toEqual(['R1', 'R2', 'R3', 'R4']);
+    expect(scenario.identity.crosswalk).toHaveLength(6);
+    scenario.identity.crosswalk.forEach(r => expect(r[0]).toBe('HCP-00731'));
   });
 
-  it('holds back 34 of 342 and shows a 19-point lift', () => {
-    expect(Math.round(342 * scenario.learn.holdoutShare)).toBe(34);
+  it('activation reaches SFMC 21 (20 without her consent) and rep 23, never more than the audience', () => {
+    expect(channelCounts(true)).toMatchObject({ email: 21, crm: 23, media: 0 });
+    expect(channelCounts(false).email).toBe(20);
+    Object.values(channelCounts(true)).forEach(n => expect(n).toBeLessThanOrEqual(23));
+  });
+
+  it('holds back 34 of the 342-oncologist programme and shows a 19-point lift', () => {
+    expect(Math.round(scenario.learn.programmeSize * scenario.learn.holdoutShare)).toBe(34);
     expect(scenario.learn.engagedContacted - scenario.learn.engagedHoldout).toBe(19);
   });
 });

@@ -8,30 +8,41 @@ import { chooseAction } from '../decision';
 
 const C = scenario.channels;
 type Ch = keyof typeof C;
-const ORDER: Ch[] = ['crm', 'email', 'media', 'rt', 'web'];
+const ORDER: Ch[] = ['crm', 'email', 'media', 'web'];
+const A = scenario.activation;
 const PUSH = '#1B70E0', PULL = '#7167B8';
 const SEG = scenario.audience.name;
-const SEG_N = scenario.audience.build[scenario.audience.build.length - 1][1] as number;
+const SEG_N = 23;
 
-const TITLES = ['Push and *pull*', `What ${scenario.hcp.short} *sees*`, 'From download to *follow-up*', 'One story across *channels*'];
+const TITLES = ['Set up in *Data 360*', 'Push and *pull*', `What ${scenario.hcp.short} *sees*`, 'From download to *follow-up*', 'One story across *channels*'];
 const SUBS = [
+  'Audience activation is configured inside Data 360: sources, destinations, consent filters and field mapping.',
   'Push channels receive a list from Data 360. Pull channels ask about one person at the moment she shows up.',
-  'One decision, four channels.',
+  'One decision, four channels, one of them blocked for this audience.',
   'The real-time path, per event rather than per segment publish.',
   'Every channel follows the same decision.',
 ];
 
 export function Activate({ local, deep, consent }: StageProps) {
   const [ch, setCh] = useState<Ch>('email');
+  // Beat 0 is the Data 360 setup view; beats 1 to 4 are the channel views. The tabs let the presenter switch.
+  const [view, setView] = useState(local === 0 ? 0 : 1);
+  useEffect(() => setView(local === 0 ? 0 : 1), [local]);
+  const sub = view === 0 ? 0 : Math.max(1, local);
   return (
     <>
-      <Head title={TITLES[local]} sub={SUBS[local]} meta={<span className="tag">Activation targets</span>} />
+      <Head title={TITLES[sub]} sub={SUBS[sub]} meta={<span className="tag">Activation targets</span>} />
+      <div className="seg light" role="group" aria-label="Activation view" style={{ justifySelf: 'start' }}>
+        <button aria-pressed={view === 0} onClick={() => setView(0)}>Set up in Data 360</button>
+        <button aria-pressed={view === 1} onClick={() => setView(1)}>What each channel receives</button>
+      </div>
       <AnimatePresence mode="wait">
-        <motion.div key={local} initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }} transition={{ duration: 0.3 }} style={{ display: 'grid', gap: 16 }}>
-          {local === 0 && <SankeyPanel ch={ch} setCh={setCh} consent={consent} />}
-          {local === 1 && <Experience consent={consent} />}
-          {local === 2 && <LiveEvent consent={consent} />}
-          {local === 3 && <OneStory />}
+        <motion.div key={sub} initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }} transition={{ duration: 0.3 }} style={{ display: 'grid', gap: 16 }}>
+          {sub === 0 && <Setup consent={consent} />}
+          {sub === 1 && <SankeyPanel ch={ch} setCh={setCh} consent={consent} />}
+          {sub === 2 && <Experience consent={consent} />}
+          {sub === 3 && <LiveEvent consent={consent} />}
+          {sub === 4 && <OneStory />}
         </motion.div>
       </AnimatePresence>
       <DeepDive show={deep} title="connection per channel">
@@ -44,65 +55,116 @@ export function Activate({ local, deep, consent }: StageProps) {
   );
 }
 
-/* Beat 1: Sankey plus the selected channel's route */
+/* Data 360 activation set-up: audiences, destinations with consent filters, field mapping */
+function Setup({ consent }: { consent: boolean }) {
+  return (
+    <div style={{ display: 'grid', gap: 12 }}>
+      <Win name="Activation: audiences" right="Data 360" flush>
+        <table className="dt">
+          <thead><tr><th>Audience</th><th>Size</th><th>Mode</th></tr></thead>
+          <tbody>{A.audiences.map(([name, size, mode]) => <tr key={name}><td style={{ fontWeight: 500 }}>{name}</td><td className="v">{size}</td><td>{mode.includes('Data Action') ? <span className="tag blue">{mode}</span> : mode}</td></tr>)}</tbody>
+        </table>
+      </Win>
+      <Win name="Destinations" right={`${A.audiences[0][0]} (${SEG_N})`} flush>
+        <div style={{ overflowX: 'auto' }}>
+          <table className="dt">
+            <thead><tr><th>Destination</th><th>Status</th><th>Consent filter</th><th>Refresh</th><th style={{ textAlign: 'right' }}>Reaches</th></tr></thead>
+            <tbody>
+              {A.destinations.map(d => {
+                const sfmc = d.id === 'email';
+                const reaches = sfmc ? (consent ? 21 : 20) : d.reaches;
+                return (
+                  <tr key={d.id}>
+                    <td style={{ fontWeight: 500 }}>{d.name}{sfmc && !consent && <span className="tag alert" style={{ display: 'table', marginTop: 4, fontSize: 11.5 }}>Dr. Ortiz filtered out: no email consent</span>}</td>
+                    <td><span className={`tag ${d.tone}`} style={{ whiteSpace: 'normal' }}>{d.status}</span></td>
+                    <td>{d.consent}</td>
+                    <td>{d.refresh}</td>
+                    <td className="v" style={{ textAlign: 'right', fontWeight: sfmc ? 600 : 400 }}>{reaches}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </Win>
+      <div className="split" style={{ display: 'grid', gap: 12, gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1.4fr)', alignItems: 'start' }}>
+        <Win name="Field mapping" right="SFMC" flush>
+          <table className="dt">
+            <thead><tr><th>Data 360 field</th><th>SFMC data extension</th></tr></thead>
+            <tbody>{A.mapping.map(([f, t2]) => <tr key={f}><td>{f}</td><td className="v">{t2}</td></tr>)}</tbody>
+          </table>
+        </Win>
+        <span className="muted" style={{ fontSize: 13.5, alignSelf: 'end' }}>{A.footnote}</span>
+      </div>
+    </div>
+  );
+}
+
+/* Channel view: Sankey plus the selected channel's route */
 function SankeyPanel({ ch, setCh, consent }: { ch: Ch; setCh: (c: Ch) => void; consent: boolean }) {
   const n = channelCounts(consent);
-  const W = 1000, top = 50, H = 320, nw = 14, gapR = 16, gapM = 34;
-  const pushT = ORDER.filter(c => C[c].kind === 'push').reduce((a, c) => a + n[c], 0);
-  const total = pushT + n.web;
-  const k = Math.min((H - gapR * (ORDER.length - 1)) / total, (H - gapM) / total);
+  // Fixed scale per oncologist; tiny bands (media blocked, website pull) still get a full row for their labels.
+  const W = 1000, top = 40, nw = 14, gapR = 14, webH = 10, mediaH = 4, k = 6, SLOT = 46;
+  const hOf = (c: Ch) => (c === 'web' ? webH : c === 'media' ? mediaH : n[c] * k);
+  const slot = (c: Ch) => Math.max(hOf(c), SLOT);
+  const H = ORDER.reduce((a, c) => a + slot(c), 0) + gapR * (ORDER.length - 1);
   const X = [210, 490, 760];
-  const stack = (vals: number[], gap: number) => {
-    const hs = vals.map(x => x * k); const tot = hs.reduce((a, b) => a + b, 0) + gap * (vals.length - 1);
-    let y = top + (H - tot) / 2; return hs.map(h => { const o = { y, h }; y += h + gap; return o; });
-  };
-  const L = stack([total], 0)[0], M = stack([pushT, n.web], gapM), R = stack(ORDER.map(c => n[c]), gapR);
+  const pushH = hOf('crm') + hOf('email');
+  const L = { y: top + (H - (pushH + webH + 30)) / 2, h: pushH + webH + 30 };
+  const M = [{ y: L.y, h: pushH }, { y: L.y + pushH + 30, h: webH }];
+  let ry = top;
+  const R = ORDER.map(c => { const o = { y: ry + (slot(c) - hOf(c)) / 2, h: hOf(c) }; ry += slot(c) + gapR; return o; });
   const path = (x0: number, y0: number, x1: number, y1: number, h: number) => {
     const xm = (x0 + x1) / 2;
     return `M${x0},${y0} C${xm},${y0} ${xm},${y1} ${x1},${y1} L${x1},${y1 + h} C${xm},${y1 + h} ${xm},${y0 + h} ${x0},${y0 + h} Z`;
   };
   let py = M[0].y;
-  const bands = ORDER.map((c, i) => {
+  const bands = ORDER.filter(c => c !== 'media').map(c => {
+    const i = ORDER.indexOf(c);
     const d = C[c].kind === 'push' ? path(X[1] + nw, py, X[2], R[i].y, R[i].h) : path(X[1] + nw, M[1].y, X[2], R[i].y, R[i].h);
     if (C[c].kind === 'push') py += R[i].h;
     return { c, d, i };
   });
   const col = (c: Ch) => (C[c].kind === 'push' ? PUSH : PULL);
+  const label = (c: Ch) => (c === 'web' ? 'Pull: live lookup' : c === 'media' ? 'Blocked, 0 (below minimum)' : `${n[c]} oncologists`);
   return (
     <div className="split" style={{ display: 'grid', gap: 16, gridTemplateColumns: 'minmax(0, 1.6fr) minmax(300px, 1fr)', alignItems: 'start' }}>
       <div>
-        <svg viewBox={`0 0 ${W} ${top + H + 40}`} role="img" aria-label={`Activation flow from ${SEG} to five channels`} style={{ width: '100%', height: 'auto', display: 'block' }}>
+        <svg viewBox={`0 0 ${W} ${top + H + 40}`} role="img" aria-label={`Activation flow from ${SEG} to four channels`} style={{ width: '100%', height: 'auto', display: 'block' }}>
           <motion.path d={path(X[0] + nw, L.y, X[1], M[0].y, M[0].h)} fill={PUSH} initial={{ opacity: 0 }} animate={{ opacity: 0.22 }} transition={{ delay: 0.1 }} />
-          <motion.path d={path(X[0] + nw, L.y + M[0].h, X[1], M[1].y, M[1].h)} fill={PULL} initial={{ opacity: 0 }} animate={{ opacity: 0.22 }} transition={{ delay: 0.2 }} />
+          <motion.path d={path(X[0] + nw, L.y + L.h - webH, X[1], M[1].y, M[1].h)} fill={PULL} initial={{ opacity: 0 }} animate={{ opacity: 0.22 }} transition={{ delay: 0.2 }} />
           {bands.map(({ c, d, i }) => (
             <motion.path key={c} d={d} fill={col(c)} style={{ cursor: 'pointer' }} onClick={() => setCh(c)}
               initial={{ opacity: 0 }} animate={{ opacity: c === ch ? 0.6 : 0.18, d }} transition={{ delay: 0.35 + i * 0.12, duration: 0.4 }} />
           ))}
           <rect x={X[0]} y={L.y} width={nw} height={L.h} rx={3} fill="var(--ink)" />
-          <text x={X[0] - 12} y={L.y + L.h / 2 - 6} textAnchor="end" fontSize={18} fontWeight={600} fill="var(--ink)">{SEG}</text>
-          <text x={X[0] - 12} y={L.y + L.h / 2 + 14} textAnchor="end" fontSize={15} fill="var(--muted)">{SEG_N} oncologists</text>
+          <text x={X[0] - 12} y={L.y + L.h / 2 - 6} textAnchor="end" fontSize={16} fontWeight={600} fill="var(--ink)">TX oncology: side effect,</text>
+          <text x={X[0] - 12} y={L.y + L.h / 2 + 13} textAnchor="end" fontSize={16} fontWeight={600} fill="var(--ink)">high intent</text>
+          <text x={X[0] - 12} y={L.y + L.h / 2 + 32} textAnchor="end" fontSize={14} fill="var(--muted)">{SEG_N} oncologists</text>
           <rect x={X[1]} y={M[0].y} width={nw} height={M[0].h} rx={3} fill={PUSH} />
           <text x={X[1] + nw / 2} y={M[0].y - 12} textAnchor="middle" fontSize={16} fontWeight={600} fill={PUSH}>Push</text>
           <rect x={X[1]} y={M[1].y} width={nw} height={M[1].h} rx={3} fill={PULL} />
           <text x={X[1] + nw / 2} y={M[1].y + M[1].h + 22} textAnchor="middle" fontSize={16} fontWeight={600} fill={PULL}>Pull</text>
           {ORDER.map((c, i) => {
             const ly = R[i].y + R[i].h / 2;
+            const blocked = c === 'media';
             return (
               <g key={c} onClick={() => setCh(c)} style={{ cursor: 'pointer' }} role="button" tabIndex={0} aria-label={C[c].label} onKeyDown={e => { if (e.key === 'Enter') setCh(c); }}>
-                <rect x={X[2]} y={R[i].y} width={nw} height={Math.max(R[i].h, 3)} rx={3} fill={col(c)} />
-                <rect x={X[2] + nw + 4} y={ly - 16} width={220} height={34} fill="transparent" />
-                <text x={X[2] + nw + 12} y={ly - 2} fontSize={18} fontWeight={c === ch ? 700 : 500} fill="var(--ink)">{C[c].label}</text>
-                <text x={X[2] + nw + 12} y={ly + 17} fontSize={15} fill="var(--muted)">{n[c].toLocaleString('en-US')} oncologists</text>
+                <rect x={X[2]} y={R[i].y} width={nw} height={Math.max(R[i].h, 3)} rx={3} fill={blocked ? 'none' : col(c)} stroke={blocked ? 'var(--magenta)' : 'none'} strokeDasharray={blocked ? '3 3' : '0'} />
+                <rect x={X[2] + nw + 4} y={ly - 16} width={230} height={34} fill="transparent" />
+                <text x={X[2] + nw + 12} y={ly - 2} fontSize={18} fontWeight={c === ch ? 700 : 500} fill={blocked ? 'var(--muted)' : 'var(--ink)'}>{C[c].label}</text>
+                <text x={X[2] + nw + 12} y={ly + 17} fontSize={15} fill={blocked ? 'var(--magenta)' : 'var(--muted)'}>{label(c)}</text>
               </g>
             );
           })}
         </svg>
         <p className="muted" style={{ fontSize: 13.5 }}>Band width is oncologists reached this cycle. One oncologist can be in several channels, so channels add up to more than {SEG_N}.</p>
       </div>
-      <Win name={C[ch].label} right={C[ch].kind === 'pull' ? 'Pull' : 'Push'}>
+      <Win name={C[ch].label} right={ch === 'media' ? 'Blocked' : C[ch].kind === 'pull' ? 'Pull' : 'Push'}>
         <span className="muted" style={{ fontSize: 13.5 }}>{C[ch].conn}</span>
         <ol style={{ margin: 0, paddingLeft: 20, display: 'grid', gap: 6, fontSize: 14 }}>{C[ch].steps.map(s => <li key={s}>{s}</li>)}</ol>
-        {ch === 'email' && !consent && <span className="tag alert" style={{ justifySelf: 'start' }}>Consent off: Dr. Ortiz filtered out</span>}
+        {ch === 'email' && !consent && <span className="tag alert" style={{ justifySelf: 'start' }}>Consent off: Dr. Ortiz filtered out (20 reached)</span>}
+        {ch === 'media' && <span className="tag alert" style={{ justifySelf: 'start' }}>{C.media.back}</span>}
       </Win>
     </div>
   );
@@ -143,12 +205,9 @@ function Experience({ consent }: { consent: boolean }) {
         </Win>
       </motion.div>
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.24 }}>
-        <Win name="hcp-publisher.example" right="Sponsored">
-          <div style={{ borderRadius: 8, background: 'linear-gradient(120deg, #0F0A19, #2A1A55)', color: '#fff', padding: '16px 14px', display: 'grid', gap: 4 }}>
-            <span style={{ fontSize: 12, opacity: 0.7 }}>For medical oncologists</span>
-            <span style={{ fontWeight: 600, fontSize: 17 }}>Side effect resources for your team</span>
-          </div>
-          <span className="muted" style={{ fontSize: 13 }}>Matched on NPI to a verified HCP login</span>
+        <Win name="HCP media" right="Blocked" style={{ opacity: 0.55 }}>
+          <span className="tag alert" style={{ justifySelf: 'start' }}>Not sent</span>
+          <span style={{ fontSize: 14 }}>23 oncologists is below the publisher minimum. Email and rep alert cover this audience.</span>
         </Win>
       </motion.div>
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.36 }}>
