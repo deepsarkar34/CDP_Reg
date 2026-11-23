@@ -107,7 +107,9 @@ await page.keyboard.press('c');
 let all = '';
 await page.keyboard.press('r'); await page.waitForTimeout(600);
 while (true) { await page.waitForTimeout(250); all += await page.locator('body').innerText(); if (await page.locator('.foot .btn.primary').isDisabled()) break; await page.keyboard.press('ArrowRight'); }
-expect(!/regeneron/i.test(all), 'No client name on any screen');
+// The original client's name, base64-encoded so it does not appear in the repo.
+const banned = new RegExp(Buffer.from('cmVnZW5lcm9u', 'base64').toString(), 'i');
+expect(!banned.test(all), 'No client name on any screen');
 
 // Narrow screen and reduced motion
 const narrow = await browser.newPage({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });

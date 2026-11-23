@@ -27,7 +27,7 @@ Question (2), Capture (3), Clean (4), Golden record creation (5), Profile (3), A
 ## Copy and visual rules
 Indegene look: navy chrome, white stage, Outfit, one gradient word per heading, magenta only for conflicts and alerts. Screens look like the systems they represent. Short labels on screen; explanations live in presenter notes. No bold lead-ins, slogans or middle-dot separators. The language model never decides: an Agentforce agent only writes the rep's explanation.
 
-## Identity in Snowflake (v2, branch feat/regeneron-identity-in-snowflake)
+## Identity in Snowflake (v2)
 - Nine steps. Old Master and AI and ML become **04 Golden record creation**; Resolve becomes **05 Profile**. Zones: "Snowflake: identity, engineering and AI", "Activation and learning".
 - Identity is decided once in Snowflake: rules R1 to R4, golden record, IDENTITY.CROSSWALK (six identifiers). Duplicates are removed in Clean only; the rules link records and never merge again.
 - Data 360 does no matching: one pass-through rule (same golden ID = same profile). The web device arrives with Snowflake's Day 4 identity run.
