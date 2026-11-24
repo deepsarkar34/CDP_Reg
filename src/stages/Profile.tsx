@@ -15,7 +15,7 @@ const NODES: Node[] = [
   { x: 340, y: 335, k: 'Web device', val: '7f3a…', device: true },
 ];
 const ACTIVITY = ['Day 1: downloaded efficacy summary', 'Day 1: dosing page', 'Day 1: efficacy page'];
-const ARRIVES = ['Golden record', 'Crosswalk', 'Scores', 'Call note topics'];
+const ARRIVES = ['Golden record', 'Crosswalk', 'Priority score', 'Call note topics', 'NBA.RECOMMENDATIONS'];
 
 /** Beats: 0 what arrives and the one-rule ruleset, 1 her unified profile, 2 Day 4 device link. */
 export function Profile({ local, deep }: StageProps) {
@@ -27,15 +27,15 @@ export function Profile({ local, deep }: StageProps) {
     <>
       <Head
         title="Snowflake decided who she is. Data 360 *acts on it*."
-        sub="The resolved identity arrives through Zero Copy. Data 360 adds live behaviour and keeps her profile current."
+        sub="Her golden record from Snowflake, plus what she does now and what to do next. This is her HCP 360."
       />
       <div className="flow4">
         <Win name="Arrives from Snowflake" right="Zero Copy">
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>{ARRIVES.map(a => <span key={a} className="tag blue">{a}</span>)}</div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>{ARRIVES.map(a => <span key={a} className={`tag ${a.startsWith('NBA') ? 'amber' : 'blue'}`}>{a}</span>)}</div>
         </Win>
         <span className="flow-arrow" aria-hidden>→</span>
         <Win name="Mapped to the Data 360 data model">
-          <span style={{ fontSize: 14 }}>Golden ID, identifiers, scores and topics land in the standard individual and party identifier objects.</span>
+          <span style={{ fontSize: 14 }}>Golden ID, identifiers, priority score, topics and next best action land in the standard individual and party identifier objects.</span>
         </Win>
         <span className="flow-arrow" aria-hidden>→</span>
         <Win name="Identity ruleset: one rule" style={{ borderColor: 'var(--blue-bright)' }}>
@@ -45,13 +45,13 @@ export function Profile({ local, deep }: StageProps) {
         </Win>
         <span className="flow-arrow" aria-hidden>→</span>
         <Win name="Unified profile" right={linked ? '5 identifiers' : '4 identifiers'}>
-          <span style={{ fontSize: 14 }}>One profile per golden ID, kept current with live behaviour.</span>
+          <span style={{ fontSize: 14 }}>Her HCP 360: one profile per golden ID, kept current with live behaviour.</span>
         </Win>
       </div>
 
       <Reveal when={showProfile}>
         <div className="split" style={{ display: 'grid', gap: 18, gridTemplateColumns: 'minmax(0, 1.6fr) minmax(280px, 1fr)', alignItems: 'start' }}>
-          <svg viewBox="0 0 680 370" role="img" aria-label="Unified profile with identifiers from the Snowflake crosswalk" style={{ width: '100%', height: 'auto', maxHeight: 340, display: 'block' }}>
+          <svg viewBox="0 0 680 370" role="img" aria-label="Unified profile with identifiers from the Snowflake crosswalk" style={{ width: '100%', height: 'auto', maxHeight: 280, display: 'block' }}>
             <defs>
               <linearGradient id="hub" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#3783C2" /><stop offset=".55" stopColor="#7167B8" /><stop offset="1" stopColor="#DC1380" /></linearGradient>
             </defs>
@@ -102,11 +102,12 @@ export function Profile({ local, deep }: StageProps) {
       </Reveal>
 
       <Reveal when={showProfile} delay={0.2}>
-        <div style={{ display: 'grid', gap: 10, gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))' }}>
+        <div style={{ display: 'grid', gap: 10, gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))' }}>
           {scenario.insights.map(([k, val, src]) => {
             const interests = k === 'Interests';
+            const nba = k === 'Next best action';
             return (
-              <div key={k} className="win" style={{ padding: '12px 14px', gap: 4 }}>
+              <div key={k} className={`win ${nba ? 'amber-tile' : ''}`} style={{ padding: '12px 14px', gap: 4 }}>
                 <span className="muted" style={{ fontSize: 13 }}>{k}</span>
                 <span style={{ fontSize: 20, fontWeight: 600, color: interests && !linked ? 'var(--faint)' : undefined }}>{interests ? (linked ? 'Efficacy' : 'None yet') : val}</span>
                 <span style={{ fontSize: 12, color: 'var(--faint)' }}>{interests ? (linked ? 'Streaming insight' : 'Waiting for the device') : src}</span>

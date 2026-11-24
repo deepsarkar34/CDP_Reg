@@ -7,8 +7,10 @@ import { allowedOptions, blockedReasons, chooseAction, playOrder, OPTIONS } from
 beforeEach(() => useDemo.getState().reset());
 
 describe('beat engine', () => {
-  it('has nine steps in the order of the identity-in-Snowflake story', () => {
-    expect(STEPS.map(s => s.id)).toEqual(['hook', 'capture', 'clean', 'golden', 'profile', 'audiences', 'decide', 'activate', 'learn']);
+  it('has nine steps, with Decide as step 05 in the Snowflake zone', () => {
+    expect(STEPS.map(s => s.id)).toEqual(['hook', 'capture', 'clean', 'golden', 'decide', 'profile', 'audiences', 'activate', 'learn']);
+    expect(STEPS[4].zone).toBe('engineering');
+    expect(STEPS.filter(s => s.zone === 'engineering').map(s => s.id)).toEqual(['clean', 'golden', 'decide']);
     expect(BEATS).toHaveLength(STEPS.reduce((a, s) => a + s.notes.length, 0));
   });
 
@@ -20,8 +22,8 @@ describe('beat engine', () => {
   });
 
   it('jumps to the first beat of a step', () => {
-    useDemo.getState().jumpStep(6);
-    expect(BEATS[useDemo.getState().beat]).toMatchObject({ step: 6, local: 0 });
+    useDemo.getState().jumpStep(4);
+    expect(BEATS[useDemo.getState().beat]).toMatchObject({ step: 4, local: 0 });
     expect(firstBeatOf(8)).toBeGreaterThan(0);
   });
 });
@@ -34,10 +36,17 @@ describe('scenario numbers (illustrative, from the brief)', () => {
     expect(scenario.sources.reduce((a, s) => a + s.records, 0)).toBe(8);
   });
 
-  it('micro segment counts fall 4,120 to 23 in build order', () => {
+  it('micro segment includes the next best action and falls 4,120 to 23', () => {
     const A = scenario.audience;
     const counts = [...A.include.map(r => r[3]), A.orGroup.count, ...A.exclude.map(r => r[3])];
-    expect(counts).toEqual([4120, 412, 118, 61, 38, 29, 23]);
+    expect(counts).toEqual([4120, 412, 118, 74, 47, 34, 27, 23]);
+    expect(A.include.find(r => r[1] === 'decision')?.[0]).toBe('Next best action is "Side effect guide email"');
+  });
+
+  it('golden record card holds identity facts only; Rx decile, last rep visit and NBA are on the profile', () => {
+    expect(scenario.golden.map(g => g[0])).toEqual(['Golden ID', 'NPI', 'Name', 'Specialty', 'Practice', 'Email on file']);
+    const tiles = scenario.insights.map(i => i[0]);
+    expect(tiles).toEqual(expect.arrayContaining(['Priority score', 'Last rep visit', 'Rx decile', 'Next best action']));
   });
 
   it('identity is decided in Snowflake: four rules and six crosswalk identifiers for HCP-00731', () => {
@@ -58,7 +67,7 @@ describe('scenario numbers (illustrative, from the brief)', () => {
   });
 });
 
-describe('decision layer: two passes', () => {
+describe('Decide in Snowflake: rules, ML, Cortex', () => {
   it('pass 1 blocks the efficacy email and MSL outreach', () => {
     expect(allowedOptions(true).map(o => o.id)).toEqual(['guide', 'visit', 'webinar']);
   });
@@ -74,8 +83,13 @@ describe('decision layer: two passes', () => {
     expect(chooseAction('rules', false).id).toBe('visit');
   });
 
-  it('rules only skips pass 2', () => {
-    expect(playOrder('rules')).toEqual([1]);
-    expect(playOrder('ml')).toEqual([1, 2]);
+  it('the strip plays inputs, rules, ML, Cortex; rules only stops after rules', () => {
+    expect(playOrder('ml')).toEqual([1, 2, 3, 4]);
+    expect(playOrder('rules')).toEqual([1, 2]);
+  });
+
+  it('Cortex explains the chosen action and never changes it', () => {
+    expect(scenario.decide.cortex).toContain('Send the side effect guide');
+    expect(chooseAction('ml', true).name).toBe(scenario.decide.nba.action);
   });
 });

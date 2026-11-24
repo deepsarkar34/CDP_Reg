@@ -12,7 +12,7 @@ const COUNTS = [...AU.include.map(r => r[3] as number), AU.orGroup.count, ...AU.
 export const MICRO_FINAL = COUNTS[COUNTS.length - 1];
 
 const SourceTag = ({ kind, label }: { kind: string; label: string }) => (
-  <span className={`tag ${kind === 'snowflake' ? 'blue' : 'd360'}`} style={{ fontSize: 11.5 }}>{label}</span>
+  <span className={`tag ${kind === 'snowflake' ? 'blue' : kind === 'decision' ? 'amber' : 'd360'}`} style={{ fontSize: 11.5 }}>{label}</span>
 );
 
 export function Audiences({ local, deep, consent }: StageProps) {
@@ -27,7 +27,7 @@ export function Audiences({ local, deep, consent }: StageProps) {
       <div className="seg light" role="group" aria-label="Use case" style={{ justifySelf: 'start' }}>
         {TABS.map((t, i) => <button key={t} aria-pressed={tab === i} onClick={() => setTab(i)}>{t}</button>)}
       </div>
-      {tab === 0 ? <MicroSegment deep={deep} /> : <RealTime consent={consent} />}
+      {tab === 0 ? <MicroSegment deep={deep} consent={consent} /> : <RealTime consent={consent} />}
       {tab === 1 && (
         <DeepDive show={deep} title="how the real-time audience runs">
           <p>A real-time segment on streamed web events, evaluated within seconds. It feeds an email follow-up, so it also requires email consent.</p>
@@ -38,7 +38,7 @@ export function Audiences({ local, deep, consent }: StageProps) {
 }
 
 /* Use case 1: conditions appear one at a time as a logic tree; the count falls after each. */
-function MicroSegment({ deep }: { deep: boolean }) {
+function MicroSegment({ deep, consent }: { deep: boolean; consent: boolean }) {
   const reduced = useReducedMotion();
   const [n, setN] = useState(reduced ? COUNTS.length : 0);
   useEffect(() => {
@@ -83,6 +83,7 @@ function MicroSegment({ deep }: { deep: boolean }) {
           <div className="legend">
             <button className="btn" onClick={() => setN(0)}>Rebuild step by step</button>
             <span><SourceTag kind="snowflake" label="Snowflake" /> computed in Snowflake</span>
+            <span><SourceTag kind="decision" label="Snowflake decision" /> next best action</span>
             <span><SourceTag kind="d360" label="Data 360" /> live in Data 360</span>
           </div>
         </div>
@@ -105,6 +106,7 @@ function MicroSegment({ deep }: { deep: boolean }) {
           </div>
           <span style={{ fontSize: 14 }}>{AU.builtLine}</span>
           {deep && <span className="muted" style={{ fontSize: 13.5 }}>{AU.techNote}</span>}
+          {!consent && <span className="tag alert" style={{ whiteSpace: 'normal' }}>With email consent off her next best action is the rep visit, so she would not be in this segment.</span>}
         </Win>
       </div>
     </div>
@@ -147,11 +149,12 @@ function RealTime({ consent }: { consent: boolean }) {
               ))}
             </div>
           )}
-          <dl className="fields" style={{ gridTemplateColumns: '150px 1fr', marginTop: 6 }}>
+          <dl className="fields" style={{ gridTemplateColumns: '170px 1fr', marginTop: 6 }}>
             <dt>Interests</dt><dd style={{ fontFamily: 'var(--font)', fontSize: 14 }}>Efficacy, Side effects (new)</dd>
             <dt>Matches call note</dt><dd style={{ fontFamily: 'var(--font)', fontSize: 14 }}>Yes: side effect management</dd>
             <dt>Snowflake alone</dt><dd style={{ fontFamily: 'var(--font)', fontSize: 14 }}>Tomorrow, around 6:00, after the nightly batch</dd>
             <dt>Why it is fast</dt><dd style={{ fontFamily: 'var(--font)', fontSize: 14 }}>Her device is already in the Snowflake crosswalk.</dd>
+            <dt>Why the side effect guide</dt><dd style={{ fontFamily: 'var(--font)', fontSize: 14 }}>{rt.why}</dd>
           </dl>
         </Win>
       </div>

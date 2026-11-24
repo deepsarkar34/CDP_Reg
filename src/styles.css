@@ -152,7 +152,7 @@ button { font: inherit; color: inherit; }
 .presenter .bar { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
 .presenter .bar > div { height: 100%; background: var(--grad); transition: width .3s; }
 
-/* Decision layer: map zone sublayers */
+/* Decide: map sub-chips */
 .map { grid-template-columns: 2fr 2fr 2fr 2.4fr 1fr 1fr; }
 .subs { display: flex; gap: 3px; flex-wrap: wrap; }
 .sl { font-size: 10.5px; line-height: 1.3; padding: 1px 6px; border-radius: 999px; border: 1px solid var(--navy-line); background: transparent; color: var(--on-navy-muted); cursor: pointer; }
@@ -238,3 +238,30 @@ button { font: inherit; color: inherit; }
 /* Step buttons size to their names so "Golden record creation" fits next to "Clean" */
 .zone-steps .step { flex: 1 1 auto; }
 .map { grid-template-columns: 1.8fr 3.1fr 1.9fr 1.3fr 1.9fr; }
+
+/* v3: Decide lives in the Snowflake zone, with an amber decision accent */
+:root { --amber: #C07A12; --amber-soft: #FBF0DE; }
+:root[data-theme="dark"] { --amber: #F0B04A; --amber-soft: #3A2D18; }
+.map { grid-template-columns: 1.6fr 4.2fr 1.9fr 1.8fr; }
+.step-col { display: grid; gap: 5px; flex: 1 1 auto; min-width: 0; }
+.step.decide { border-top: 3px solid var(--amber); }
+.step.decide[aria-current="step"] { border-top-color: var(--amber); }
+.building { font-size: 10.5px; font-weight: 600; color: #1A1206; background: var(--amber); border-radius: 999px; padding: 1px 7px; white-space: nowrap; align-self: center; margin-left: auto; }
+.tag.amber { background: var(--amber-soft); color: var(--amber); border-color: transparent; }
+.amber-tile { border-color: var(--amber) !important; background: var(--amber-soft) !important; }
+/* v3: the four-box decision strip */
+.strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 22px; }
+.strip-box { position: relative; display: grid; gap: 8px; align-content: start; border: 1px solid var(--line); border-top: 3px solid var(--line-2); background: var(--surface); border-radius: 12px; padding: 12px 14px; box-shadow: var(--shadow); cursor: pointer; }
+.strip-box.done { border-top-color: var(--blue-bright); }
+.strip-box.cortex.done { border-top-color: var(--purple); }
+.strip-box.live { background: var(--blue-soft); animation: pulse-blue 1.4s ease-in-out infinite; }
+.strip-box.off { opacity: .55; cursor: default; box-shadow: none; }
+.strip-title { font-weight: 700; font-size: 15px; }
+.strip-foot { font-size: 12.5px; font-style: italic; color: var(--muted); border-top: 1px solid var(--line); padding-top: 6px; }
+.strip-arrow { position: absolute; right: -18px; top: 44%; color: var(--muted); font-size: 16px; }
+.box-list { margin: 0; padding-left: 18px; display: grid; gap: 3px; font-size: 14px; }
+@media (max-width: 900px) { .strip { grid-template-columns: minmax(0, 1fr); } .strip-arrow { display: none; } }
+@media (prefers-reduced-motion: reduce) { .strip-box.live { animation: none; } }
+.matched { transition: background .25s, color .25s; border-radius: 4px; }
+.matched.hl { background: var(--blue-bright) !important; color: #fff !important; padding: 0 4px; }
+.zone-steps { align-items: flex-start; }

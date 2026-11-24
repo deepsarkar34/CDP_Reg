@@ -65,6 +65,7 @@ function Setup({ consent }: { consent: boolean }) {
           <tbody>{A.audiences.map(([name, size, mode]) => <tr key={name}><td style={{ fontWeight: 500 }}>{name}</td><td className="v">{size}</td><td>{mode.includes('Data Action') ? <span className="tag blue">{mode}</span> : mode}</td></tr>)}</tbody>
         </table>
       </Win>
+      <span style={{ fontWeight: 600 }}>{A.followsNba}</span>
       <Win name="Destinations" right={`${A.audiences[0][0]} (${SEG_N})`} flush>
         <div style={{ overflowX: 'auto' }}>
           <table className="dt">
@@ -199,8 +200,9 @@ function Experience({ consent }: { consent: boolean }) {
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
         <Win name="Veeva CRM, rep alert" right={scenario.hcp.rep} style={{ opacity: repAlert ? 1 : 0.5 }}>
           {repAlert ? <>
-            <span style={{ fontWeight: 600 }}>Visit Dr. Ortiz this week</span>
-            <span style={{ fontSize: 14 }}>She downloaded the side effect guide today and asked about nurse support. Bring the nurse webinar invite.</span>
+            <span style={{ fontWeight: 600 }}>Visit Dr. Ortiz within 7 days</span>
+            <span style={{ fontSize: 14, fontStyle: 'italic' }}>"{consent ? scenario.decide.cortex : scenario.decide.cortexNoConsent}"</span>
+            <span className="tag" style={{ justifySelf: 'start', fontSize: 11.5 }}>Reason written by Cortex AI in step 05</span>
           </> : <span className="tag" style={{ justifySelf: 'start' }}>No alert: rules only, nothing plans the next touch</span>}
         </Win>
       </motion.div>
@@ -231,8 +233,8 @@ function LiveEvent({ consent }: { consent: boolean }) {
   const steps = [
     { t: '10:14', s: 'Dr. Ortiz downloads the side effect guide' },
     { t: '10:14', s: 'The web tracking script streams the event into Data 360 within seconds' },
-    { t: '10:16', s: consent ? 'Data Action rule checks: side effect download, score at least 0.7, email consent' : 'Data Action rule: no email consent, email path skipped' },
-    { t: '10:16', s: `Decision runs: ${pick.name.toLowerCase()}` },
+    { t: '10:16', s: consent ? 'Data Action rule checks: side effect download, priority score at least 0.7, email consent' : 'Data Action rule: no email consent, email path skipped' },
+    { t: '10:16', s: `Data 360 uses her next best action from Snowflake: ${pick.name.toLowerCase()}` },
     { t: '10:42', s: pick.email ? `${pick.name} sent` : 'No email sent' },
     { t: 'Same day', s: repAlert ? 'Rep alert appears in Veeva CRM' : 'No rep alert: nothing plans the next touch' },
   ];
@@ -273,8 +275,8 @@ function LiveEvent({ consent }: { consent: boolean }) {
           {shown >= 6 && repAlert && (
             <motion.div key="rep" className="notif" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
               <span className="app-name"><span>Veeva CRM, {scenario.hcp.rep}</span><span>today</span></span>
-              <strong>Visit Dr. Ortiz this week</strong>
-              <span className="muted" style={{ fontSize: 13 }}>Bring the nurse webinar invite</span>
+              <strong>Visit Dr. Ortiz within 7 days</strong>
+              <span className="muted" style={{ fontSize: 13 }}>{consent ? scenario.decide.cortex : scenario.decide.cortexNoConsent}</span>
             </motion.div>
           )}
         </AnimatePresence>
@@ -287,7 +289,7 @@ function LiveEvent({ consent }: { consent: boolean }) {
 function OneStory() {
   const cards = [
     ['Email', 'Side effect guide, today at 10:42'],
-    ['Rep alert', 'Visit this week, bring the nurse webinar invite'],
+    ['Rep alert', 'Visit within 7 days with the nurse webinar invite, with the Cortex reason'],
     ['Website', 'Leads with side effect resources and the nurse webinar'],
   ];
   return (

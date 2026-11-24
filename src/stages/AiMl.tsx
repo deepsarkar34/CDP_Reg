@@ -5,7 +5,7 @@ import { DeepDive, GradText, Win } from '../components/ui';
 
 const A = scenario.ai;
 const TABS = ['Snowflake ML: predict', 'Cortex: read call notes', 'Cortex: ask in plain English'];
-const TITLES = ['A likelihood score for *every oncologist*', 'A call note becomes *data*', 'Ask across all oncologists in *plain English*'];
+const TITLES = ['A priority score for *every oncologist*', 'A call note becomes *data*', 'Ask across all oncologists in *plain English*'];
 
 /** The AI and ML capabilities, unchanged from the previous AI and ML step; now a sub-view of Golden record creation. */
 export function AiTabs({ index }: { index: number }) {
@@ -57,7 +57,9 @@ function Predict() {
         </div>
       </div>
       <Win name={`${scenario.hcp.short}, ${A.table}`} right={A.percentile}>
+        <span className="muted" style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink)' }}>{A.scoreLabel}</span>
         <span className="big" style={{ color: 'var(--blue)' }}>{A.score.toFixed(2)}</span>
+        <span style={{ fontSize: 14 }}>How likely she is to start a new patient in 90 days. Tells us <i>who</i> to focus on.</span>
         <span className="muted" style={{ fontSize: 13.5 }}>Why the model thinks so</span>
         {A.drivers.map(([label, w], i) => (
           <div key={label as string} style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: 10, alignItems: 'center', fontSize: 14 }}>
@@ -80,7 +82,7 @@ function Notes() {
         <p style={{ fontStyle: 'italic', fontSize: 16 }}>"{A.note}"</p>
         <code className="mono" style={{ fontSize: 13, color: 'var(--blue)' }}>AI_EXTRACT(note, ['topic', 'audience', 'sentiment'])</code>
       </Win>
-      <Win name="Cortex AI output" right="Nightly, every note" flush>
+      <Win name="Cortex AI output" right={<span className="tag amber">Input to step 05 Decide</span>} flush>
         <table className="dt">
           <tbody>
             {A.extract.map(([k, val], i) => (

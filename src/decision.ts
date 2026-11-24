@@ -1,6 +1,6 @@
-// The decision layer for Dr. Ortiz: two passes, in this order.
-// Pass 1 (rules) removes what is not allowed. Pass 2 (machine learning) ranks what is left.
-// In Rules only, pass 2 is off and a fixed brand priority list picks. All numbers illustrative.
+// Decide, in Snowflake: rules decide what is allowed, machine learning decides what is best,
+// and Cortex AI explains it. Cortex never decides. In Rules only, ML and Cortex are off and a fixed
+// brand priority list picks. All numbers illustrative.
 import scenario from './scenario/scenario.json';
 
 export type Mode = 'ml' | 'rules';
@@ -9,15 +9,17 @@ export interface DecideOption { id: string; name: string; email: boolean; respon
 export const OPTIONS = scenario.decide.options as DecideOption[];
 
 export const PASSES = [
-  { n: 1, name: 'Rules: what is allowed', short: 'Rules', kind: 'Rules',
-    text: 'Remove what the brand may not do: consent, contact limits, MLR approved content, the call plan and medical versus promotional boundaries.' },
-  { n: 2, name: 'ML: what works best', short: 'ML', kind: 'Machine learning',
-    text: 'A model trained in Snowflake on how similar oncologists responded estimates her chance of engaging with each allowed option, and ranks them.' },
+  { n: 1, name: 'Rules: what is allowed', short: 'Rules', kind: 'SQL rules' },
+  { n: 2, name: 'ML: what works best', short: 'ML', kind: 'Snowflake ML response model' },
+  { n: 3, name: 'Cortex AI: explains it', short: 'Cortex', kind: 'Generative AI' },
 ] as const;
 
-/** Pass 2 is switched off in Rules only. */
-export const isActive = (n: number, mode: Mode) => mode === 'ml' || n === 1;
-export const playOrder = (mode: Mode) => PASSES.map(p => p.n).filter(n => isActive(n, mode));
+/** The four boxes of the strip: 1 inputs, 2 rules, 3 ML, 4 Cortex. Pass n is box n + 1. */
+export const BOXES = 4;
+/** Rules only: ML and Cortex are not used. */
+export const isActive = (pass: number, mode: Mode) => mode === 'ml' || pass === 1;
+export const boxActive = (box: number, mode: Mode) => box === 1 || isActive(box - 1, mode);
+export const playOrder = (mode: Mode) => [1, 2, 3, 4].filter(b => boxActive(b, mode));
 
 /** Guardrail reasons that remove an option (empty = allowed). */
 export function blockedReasons(o: DecideOption, consent: boolean): string[] {

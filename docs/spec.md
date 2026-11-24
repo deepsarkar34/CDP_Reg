@@ -18,7 +18,7 @@ A 15–18 minute live demo for a pharma client. Mixed room (brand and technical)
 | Timer | 18 minutes |
 
 ## Steps and beats (29 beats)
-Question (2), Capture (3), Clean (4), Golden record creation (5), Profile (3), Audiences (2), Decide (2), Activate (5), Learn (3).
+Question (2), Capture (3), Clean (4), Golden record creation (5), Decide (2), Profile (3), Audiences (2), Activate (5), Learn (3).
 
 ## What-if levers
 - `M`: Rules only vs Rules plus machine learning. Pass 2 is crossed out on the map in Rules only.
@@ -35,6 +35,15 @@ Indegene look: navy chrome, white stage, Outfit, one gradient word per heading, 
 - Activation configured in Data 360: SFMC 21 (20 without her consent), rep 23, media blocked, website live lookup.
 - Learn's holdout is measured on the whole programme (34 of 342): 10% of a 23-doctor segment would be 2 doctors.
 - No real client named anywhere; the header keeps the fictional Acme Pharma.
+
+## Decide in Snowflake (v3)
+- Decide moves to step 05 inside the Snowflake zone; the separate decision zone is removed. Chips 1 Rules, 2 ML, 3 Cortex; "Being built" badge; amber decision accent.
+- Four-box strip: Inputs, Rules (SQL), Machine learning (Snowflake ML response model), Cortex AI (explains, never decides). Output: NBA.RECOMMENDATIONS, read by Data 360 through Zero Copy.
+- Two models: priority model (step 04, who, 0.81) and response model (step 05, what, guide email 34%).
+- Golden record card holds identity facts only; Rx decile, last rep visit and next best action appear on the step 06 profile.
+- Micro segment adds "Next best action is Side effect guide email": 4,120, 412, 118, 74, 47, 34, 27, 23; 21 after email consent.
+- Email consent off: rules block email, so her next best action becomes the rep visit; Cortex has a matching reason.
+- No real client named anywhere.
 
 ## Removed from the Dr. Brown version
 Platform switch, five-sublayer decision (lift, value, capacity), clean room beat, recap beat.

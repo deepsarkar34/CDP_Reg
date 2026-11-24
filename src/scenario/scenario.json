@@ -330,31 +330,10 @@
       ]
     ],
     [
-      "Rx decile",
-      "7 in immuno oncology",
-      [
-        "rx"
-      ]
-    ],
-    [
-      "Patients treated, 12 mo",
-      "58 (count only)",
-      [
-        "claims"
-      ]
-    ],
-    [
       "Email on file",
       "lena.ortiz@houstononc.org",
       [
         "sfmc",
-        "crm"
-      ]
-    ],
-    [
-      "Last rep visit",
-      "2026-10-02, in person",
-      [
         "crm"
       ]
     ]
@@ -438,11 +417,13 @@
     ],
     "ask": "Which Texas oncologists raised side effect management this quarter but have not received the side effect guide?",
     "answer": "38 oncologists. 9 score above 0.7. Dr. Lena Ortiz ranks second.",
-    "sql": "SELECT h.hcp_id, h.name, s.score\nFROM gold.hcp h\nJOIN ml.hcp_scores s USING (hcp_id)\nJOIN ai.call_note_topics t USING (hcp_id)\nWHERE h.state = 'TX'\n  AND t.topic = 'Side effect management'\n  AND h.hcp_id NOT IN (SELECT hcp_id FROM sfmc.sends\n                       WHERE asset = 'side_effect_guide')\nORDER BY s.score DESC;"
+    "sql": "SELECT h.hcp_id, h.name, s.score\nFROM gold.hcp h\nJOIN ml.hcp_scores s USING (hcp_id)\nJOIN ai.call_note_topics t USING (hcp_id)\nWHERE h.state = 'TX'\n  AND t.topic = 'Side effect management'\n  AND h.hcp_id NOT IN (SELECT hcp_id FROM sfmc.sends\n                       WHERE asset = 'side_effect_guide')\nORDER BY s.score DESC;",
+    "scoreLabel": "Priority score",
+    "scoreCaption": "How likely she is to start a new patient in 90 days. Tells us who to focus on."
   },
   "insights": [
     [
-      "Likelihood score",
+      "Priority score",
       "0.81",
       "Snowflake ML, via Zero Copy"
     ],
@@ -457,14 +438,24 @@
       "Streaming insight"
     ],
     [
-      "Last rep visit",
-      "45 days ago",
-      "Calculated insight"
-    ],
-    [
       "Email consent",
       "Opted in",
       "Ingested consent"
+    ],
+    [
+      "Last rep visit",
+      "45 days ago",
+      "From Snowflake (CRM)"
+    ],
+    [
+      "Rx decile",
+      "7 in immuno oncology",
+      "From Snowflake (IQVIA)"
+    ],
+    [
+      "Next best action",
+      "Side effect guide email",
+      "From Snowflake, nightly"
     ]
   ],
   "audience": {
@@ -474,26 +465,32 @@
       [
         "Specialty is Medical Oncology",
         "snowflake",
-        "Snowflake (golden record)",
+        "Snowflake",
         4120
       ],
       [
         "State is Texas",
         "snowflake",
-        "Snowflake (golden record)",
+        "Snowflake",
         412
       ],
       [
-        "Likelihood score at least 0.7",
+        "Priority score at least 0.7",
         "snowflake",
         "Snowflake ML",
         118
       ],
       [
+        "Next best action is \"Side effect guide email\"",
+        "decision",
+        "Snowflake decision",
+        74
+      ],
+      [
         "Downloaded side effect content in the last 7 days",
         "d360",
-        "Data 360 (live web behaviour)",
-        61
+        "Data 360 (live)",
+        47
       ]
     ],
     "orGroup": {
@@ -504,19 +501,19 @@
           "Snowflake Cortex"
         ],
         [
-          "Submitted a side effect medical information request in the last 30 days",
+          "Side effect medical information request in 30 days",
           "d360",
           "Data 360"
         ]
       ],
-      "count": 38
+      "count": 34
     },
     "exclude": [
       [
         "Rep visit in the last 14 days",
         "snowflake",
-        "Snowflake (CRM)",
-        29
+        "Snowflake",
+        27
       ],
       [
         "Currently in an active journey",
@@ -526,7 +523,7 @@
       ]
     ],
     "start": 4120,
-    "expression": "(Specialty = 'Medical Oncology' AND State = 'TX' AND Score >= 0.7 AND SideEffectDownload_7d = true AND (CallNoteTopic = 'Side effect management' OR SideEffectMIR_30d = true)) AND NOT (RepVisit_14d = true OR InActiveJourney = true)",
+    "expression": "(Specialty = 'Medical Oncology' AND State = 'TX' AND PriorityScore >= 0.7 AND NBA = 'Side effect guide email' AND SideEffectDownload_7d = true AND (CallNoteTopic = 'Side effect management' OR SideEffectMIR_30d = true)) AND NOT (RepVisit_14d = true OR InActiveJourney = true)",
     "sizeCheck": [
       [
         "Email",
@@ -574,7 +571,7 @@
           "10:14 today"
         ],
         [
-          "Snowflake score at least 0.7",
+          "Priority score at least 0.7",
           "0.81"
         ],
         [
@@ -596,7 +593,8 @@
           "10:42",
           "Email sent"
         ]
-      ]
+      ],
+      "why": "It is her latest next best action from Snowflake. Data 360 acts on it within minutes, without waiting for tonight's run."
     }
   },
   "decide": {
@@ -657,7 +655,33 @@
         "Pause email for 14 days",
         true
       ]
-    ]
+    ],
+    "trigger": "Nightly decision run, Day 16. Uses her golden record, priority score and call note topic from step 04, plus consent and contact history.",
+    "cortex": "She asked about side effects in her last call and downloaded the efficacy summary. Send the side effect guide; rep visit within 7 days with the nurse webinar invite.",
+    "cortexNoConsent": "She asked about side effects in her last call. Email consent is off, so: rep visit within 7 days with nurse resources.",
+    "models": [
+      [
+        "Priority model (step 04)",
+        "who deserves attention",
+        "Dr. Ortiz 0.81"
+      ],
+      [
+        "Response model (step 05)",
+        "what to do for her",
+        "guide email 34%"
+      ]
+    ],
+    "sql": "SELECT action\nFROM nba.options\nWHERE consent_email = TRUE\n  AND NOT already_received\n  AND (action <> 'MSL_OUTREACH' OR has_medical_request)",
+    "modelLine": "Response model: gradient boosting, trained on 2 years of response history, registered in the Snowflake Model Registry.",
+    "nba": {
+      "table": "NBA.RECOMMENDATIONS",
+      "action": "Side effect guide email",
+      "channel": "email",
+      "when": "at her next interest signal, or within 3 days",
+      "nbe": "guide email → rep visit within 7 days with the nurse webinar invite → if no engagement, pause email for 14 days",
+      "refreshed": "nightly",
+      "note": "Being built in Snowflake. Data 360 reads this table through Zero Copy and acts on it."
+    }
   },
   "channels": {
     "email": {
@@ -666,7 +690,7 @@
       "n": 21,
       "conn": "Marketing Cloud connector to the brand's SFMC business unit",
       "steps": [
-        "The decision chooses the side effect guide email for Dr. Ortiz.",
+        "Snowflake's next best action for Dr. Ortiz is the side effect guide email.",
         "Data 360 writes her and the chosen fields (name, specialty, interest) into a shared data extension in SFMC.",
         "Journey Builder uses it as its entry source. Sent at 10:42 from the oncology brand team.",
         "Subject: \"Managing immune related side effects: a guide for your team\", with the approved guide and Important Safety Information."
@@ -679,9 +703,9 @@
       "n": 23,
       "conn": "API or a write back to Snowflake, then into Veeva CRM. Veeva is not a native Data 360 target.",
       "steps": [
-        "The decision plans a rep visit within 7 days.",
+        "Snowflake's next best experience plans a rep visit within 7 days.",
         "The alert is written to Snowflake or sent through an API.",
-        "Her rep, Marcus Lee, sees: \"Visit Dr. Ortiz this week. She downloaded the side effect guide today and asked about nurse support. Bring the nurse webinar invite.\"",
+        "Her rep, Marcus Lee, sees the reason written by Cortex AI: \"She asked about side effects in her last call and downloaded the efficacy summary. Send the side effect guide; rep visit within 7 days with the nurse webinar invite.\"",
         "He visits on Day 21 and logs the call."
       ],
       "back": "The call record returns in the nightly Veeva extract, lands in Snowflake, and updates her profile."
@@ -798,7 +822,7 @@
       ],
       [
         "Everything above",
-        "Shared back from Data 360 to Snowflake through Zero Copy, where models retrain"
+        "Results go back to Snowflake through Zero Copy; the response model retrains and the rules are reviewed."
       ]
     ],
     "holdoutShare": 0.1,
@@ -825,7 +849,7 @@
         "id": "R2",
         "name": "OneKey ID, or standardized name plus address",
         "links": "Veeva CRM record (deduplicated in Clean)",
-        "example": "6400 Fannin Street, Houston",
+        "example": "OneKey ID WUS-0058213",
         "sources": [
           "crm"
         ]
@@ -900,7 +924,7 @@
     [
       "crm",
       "Veeva CRM",
-      "1 record after Clean"
+      "OneKey ID WUS-0058213"
     ],
     [
       "rx",
@@ -915,17 +939,17 @@
     [
       "sfmc",
       "SFMC email",
-      "1 contact after Clean"
+      "lena.ortiz@houstononc.org"
     ],
     [
       "web",
       "HCP website",
-      "Device 7f3a…"
+      "Device 7f3a… (clicked email link)"
     ],
     [
       "ref",
       "OneKey reference",
-      "WUS-0058213"
+      "NPI 14•••••213"
     ]
   ],
   "activation": {
@@ -997,6 +1021,7 @@
         "score_band"
       ]
     ],
-    "footnote": "Illustrative. Show as configured only the destinations that exist in your org."
+    "footnote": "Illustrative. Show as configured only the destinations that exist in your org.",
+    "followsNba": "What is sent follows Snowflake's next best action for each doctor."
   }
 }

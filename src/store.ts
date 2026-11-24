@@ -9,13 +9,13 @@ export interface DemoState {
   vendor: VendorId;
   deepDive: boolean;
   consent: boolean;
-  /** Decision layer mode: rules plus machine learning, or rules only. */
+  /** Decide mode: rules plus machine learning, or rules only. */
   mode: Mode;
-  /** Decide step playback: highest sublayer revealed (0 = none, 5 = finished). Local to this window. */
+  /** Decide step playback: highest strip box revealed (0 = none, 4 = Cortex). Local to this window. */
   sub: number;
-  /** True while the Decide sublayers are auto-playing. Local to this window. */
+  /** True while the Decide strip is auto-playing. Local to this window. */
   subPlaying: boolean;
-  /** Sublayer clicked on the map from another step; Decide starts from it on entry. */
+  /** Box clicked on the map from another step; Decide starts from it on entry. */
   subRequest: number | null;
   startedAt: number | null;
 }

@@ -33,8 +33,8 @@ export function GoldenRecord({ local, deep }: StageProps) {
         </motion.div>
       </AnimatePresence>
       <div className="legend" style={{ gap: 8 }}>
-        <span className="tag">Golden record</span><span>+</span><span className="tag">Crosswalk</span><span>+</span><span className="tag">ML.HCP_SCORES</span><span>+</span><span className="tag">AI.CALL_NOTE_TOPICS</span><span>→</span>
-        <span className="tag blue">Zero Copy</span><span>→</span><span className="tag blue">Data 360, no pipeline, no copy</span>
+        <span className="tag">Golden record</span><span>+</span><span className="tag">Crosswalk</span><span>+</span><span className="tag">Priority score</span><span>+</span><span className="tag">Call note topics</span><span>→</span>
+        <span className="tag amber">Step 05 Decide</span>
       </div>
       {view === 2 && <AiDeepDive show={deep} />}
       {view === 1 && (
@@ -50,25 +50,32 @@ export function GoldenRecord({ local, deep }: StageProps) {
 function Match({ deep }: { deep: boolean }) {
   const reduced = useReducedMotion();
   const [n, setN] = useState(reduced ? ID.rules.length : 0);
+  const [hover, setHover] = useState<number | null>(null);
   useEffect(() => {
     if (n >= ID.rules.length) return;
     const t = setTimeout(() => setN(x => x + 1), n === 0 ? 500 : RULE_MS);
     return () => clearTimeout(t);
   }, [n]);
   const linkedBy = (src: string) => ID.rules.findIndex(r => r.sources.includes(src));
+  // The rule in focus: the one hovered, otherwise the one that just lit up during the animation.
+  const focus = n > 0 ? n - 1 : null;
+  const animating = n < ID.rules.length;
+  const active = hover ?? (animating ? focus : null);
   return (
     <>
-      <div className="split" style={{ display: 'grid', gap: 16, gridTemplateColumns: 'minmax(260px, 0.9fr) minmax(0, 1.6fr)', alignItems: 'start' }}>
-        <Win name="Clean silver records" right="After Clean" flush>
+      <div className="split" style={{ display: 'grid', gap: 16, gridTemplateColumns: 'minmax(300px, 1fr) minmax(0, 1.6fr)', alignItems: 'start' }}>
+        <Win name="Her records after cleaning" right="Linked by" flush>
           <table className="dt">
             <tbody>
-              {scenario.matchSources.map(([id, name, detail]) => {
+              {scenario.matchSources.map(([id, name, matched]) => {
                 const r = linkedBy(id);
                 const on = r >= 0 && r < n;
-                const live = r === n - 1;
+                const hl = active === r;
                 return (
-                  <motion.tr key={id} initial={false} animate={{ backgroundColor: on ? (live ? 'var(--blue-soft)' : 'var(--ok-soft)') : 'rgba(0,0,0,0)' }} transition={{ duration: 0.3 }}>
-                    <td><span style={{ fontWeight: 500 }}>{name}</span><span className="muted mono" style={{ display: 'block', fontSize: 12 }}>{detail}</span></td>
+                  <motion.tr key={id} onMouseEnter={() => setHover(r)} onMouseLeave={() => setHover(null)} initial={false}
+                    animate={{ backgroundColor: hl ? 'var(--blue-soft)' : on ? 'var(--ok-soft)' : 'rgba(0,0,0,0)' }} transition={{ duration: 0.3 }}>
+                    <td><span style={{ fontWeight: 500 }}>{name}</span>
+                      <span className={`mono matched ${hl ? 'hl' : ''}`} style={{ display: 'block', fontSize: 12 }}>{matched}</span></td>
                     <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                       {on && <motion.span initial={reduced ? false : { opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} className="tag ok" style={{ fontSize: 11.5 }}>{ID.rules[r].id} → {scenario.hcp.goldenId}</motion.span>}
                     </td>
@@ -80,20 +87,21 @@ function Match({ deep }: { deep: boolean }) {
         </Win>
         <div style={{ display: 'grid', gap: 8 }}>
           {ID.rules.map((r, i) => {
-            const done = i < n, live = i === n - 1;
+            const done = i < n, live = i === n - 1 && animating, hl = active === i;
             return (
               <motion.div key={r.id} className={`pipe-step ${done ? 'done' : ''} ${live ? 'live' : ''}`} initial={false} animate={{ opacity: done ? 1 : 0.45 }}
+                onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(null)}
                 style={{ cursor: 'default', gridTemplateColumns: '44px 1fr auto' }}>
                 <span className="num" style={{ fontSize: 20, gridRow: 'span 2' }}>{r.id}</span>
                 <span style={{ fontWeight: 600 }}>{r.name}</span>
-                <span className="tag mono" style={{ gridRow: 'span 2', alignSelf: 'center', fontSize: 11.5 }}>{r.example}</span>
+                <span className={`tag mono matched ${hl ? 'hl' : ''}`} style={{ gridRow: 'span 2', alignSelf: 'center', fontSize: 11.5 }}>{r.example}</span>
                 <span className="muted" style={{ fontSize: 13 }}>Links: {r.links}</span>
               </motion.div>
             );
           })}
           <div className="legend" style={{ marginTop: 2 }}>
-            <button className="btn" onClick={() => setN(0)} disabled={n < ID.rules.length}>Replay rules</button>
-            <span className="muted" style={{ fontSize: 13.5 }}>Runs in Snowflake. Data 360 does no matching.</span>
+            <button className="btn" onClick={() => setN(0)} disabled={animating}>Replay rules</button>
+            <span className="muted" style={{ fontSize: 13.5 }}>Runs in Snowflake. Data 360 does no matching. Hover a record or rule to see what matched.</span>
           </div>
         </div>
       </div>
@@ -110,6 +118,7 @@ function Crosswalk() {
   return (
     <>
       <div className="split" style={{ display: 'grid', gap: 16, gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1.25fr)', alignItems: 'start' }}>
+        <div style={{ display: 'grid', gap: 8 }}>
         <Win name="Golden record" right="gold.hcp" flush>
           <table className="dt">
             <tbody>
@@ -130,6 +139,8 @@ function Crosswalk() {
             </tbody>
           </table>
         </Win>
+        <span className="muted" style={{ fontSize: 14 }}>Who she is: one trusted version, decided once. Her HCP 360 is built on this in step 06.</span>
+        </div>
         <Win name="IDENTITY.CROSSWALK" right={`${ID.crosswalk.length} identifiers`} flush>
           <div style={{ overflowX: 'auto' }}>
             <table className="dt">

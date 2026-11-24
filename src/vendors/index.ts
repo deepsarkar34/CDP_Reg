@@ -6,7 +6,7 @@ export type VendorId = 'salesforce';
 export interface VendorPack {
   id: VendorId;
   label: string;
-  zones: { sources: string; engineering: string; cdp: string; decision: string; channels: string };
+  zones: { sources: string; engineering: string; cdp: string; channels: string };
   layers: { bronze: string; silver: string; gold: string };
   mdm: string;
   ingest: string;
@@ -24,7 +24,7 @@ export const VENDORS: Record<VendorId, VendorPack> = {
   salesforce: {
     id: 'salesforce',
     label: 'Snowflake and Salesforce Data 360',
-    zones: { sources: 'Data sources', engineering: 'Snowflake: identity, engineering and AI', cdp: 'Salesforce Data 360', decision: 'Decision layer', channels: 'Activation and learning' },
+    zones: { sources: 'Data sources', engineering: 'Snowflake: identity, engineering and AI', cdp: 'Salesforce Data 360', channels: 'Activation and learning' },
     layers: { bronze: 'Bronze', silver: 'Silver', gold: 'Gold' },
     mdm: 'Identity rules in Snowflake, checked against OneKey',
     ingest: 'Zero Copy from Snowflake',
